@@ -1,0 +1,41 @@
+---
+title: "Lista X"
+subtitle: "Prof joaozinho \n materia
+| materia X"
+author:
+  - name: Bruno Gondim Toledo
+    affiliation: 
+      - name: Universidade de Brasília - UnB
+    url: https://penasta.github.io
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc-depth: 3
+    html-math-method: katex
+
+format:
+  html:
+    theme: cyborg
+    css: styles.css
+    logo: unb.jpg
+    width: 1500
+    footer: Departamento de estatística - UnB
+resources:
+  - demo.pdf
+editor_options: 
+  chunk_output_type: console
+knitr:
+  opts_chunk:
+    dev: png
+    dev.args:
+      bg: transparent
+geometry: a4paper
+fontsize: 12pt
+abstract: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
