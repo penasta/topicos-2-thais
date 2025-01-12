@@ -126,18 +126,17 @@ graph TD
 
 ## Implementação XGBoost
 
-(vou adicionar ainda)
+Vamos à prática!
 
 ## Exemplo prático: XGBoost, CatBoost & outros
 
-(vou organizar esta seção ainda, trazendo um exemplo prático que fiz uma vez comparando algoritmos)
-
-https://github.com/penasta/NLP/blob/main/funcao_nlp.ipynb
+[Exemplo prático](https://github.com/penasta/NLP/blob/main/funcao_nlp.ipynb)
 
 ## Referências
 
-(vou ajustar isso ainda, depois)
+[Documentação XGBoost.](https://xgboost.readthedocs.io/_/downloads/en/release_0.80/pdf/)
 
-https://bdta.abcd.usp.br/directbitstream/6962846b-66bd-4bd6-9f74-2b18bff03234/Pinheiro_JoãoManoelHerrera_tcc.pdf
+[Pinheiro, João Manoel Herrera. Um estudo sobre Algoritmos de Boosting e a Otimização de Hiperparâmetros Utilizando Optuna. São Carlos, SP. 2023.](https://bdta.abcd.usp.br/directbitstream/6962846b-66bd-4bd6-9f74-2b18bff03234/Pinheiro_JoãoManoelHerrera_tcc.pdf)
 
-https://xgboost.readthedocs.io/_/downloads/en/release_0.80/pdf/
+
+
