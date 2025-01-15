@@ -467,10 +467,184 @@ João Victor
 <h2>Exemplo prático: XGBoost, CatBoost &amp; outros</h2>
 <p><a href="https://github.com/penasta/NLP/blob/main/funcao_nlp.ipynb">Exemplo prático</a></p>
 </section>
+<section id="categorical-boost---catboost" class="slide level2">
+<h2>Categorical Boost - CatBoost</h2>
+<ul>
+<li>Algoritmo de aprendizado de máquina</li>
+<li>Modelo Ensemble</li>
+<li>Árvores de decisão</li>
+<li>Não é necessário pré-processamento dos dados categóricos</li>
+<li>Cada árvore reduz a perda comparada com a anterior</li>
+<li>Random Permutations</li>
+</ul>
+</section>
+<section id="target-encoding" class="slide level2">
+<h2>Target Encoding</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {OptionCount+Prior}{n+1}\]</span></p>
+<p><strong>Prior:</strong> Palpite inicial arbitrário </p>
+<p><strong>Option Count:</strong> número de vezes que alguém da mesma cor gostou de estatística anteriormente </p>
+<p><strong>n:</strong> número de repetições da mesma cor já vistas</p>
+</div>
+</div>
+</section>
+<section id="processando-variáveis-categóricas" class="slide level2">
+<h2>Processando variáveis categóricas</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding1.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {OptionCount+Prior}{n+1}\]</span></p>
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {0+0.05}{0+1} = 0.05\]</span></p>
+</div>
+</div>
+</section>
+<section id="processando-variáveis-categóricas-1" class="slide level2">
+<h2>Processando variáveis categóricas</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding2.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {0+0.05}{1+1}\]</span></p>
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {0.05}{2} = 0.025\]</span></p>
+</div>
+</div>
+</section>
+<section id="processando-variáveis-categóricas-2" class="slide level2">
+<h2>Processando variáveis categóricas</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding3.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1+0.05}{1+1}\]</span></p>
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1.05}{2} = 0.525\]</span></p>
+</div>
+</div>
+</section>
+<section id="processando-variáveis-categóricas-3" class="slide level2">
+<h2>Processando variáveis categóricas</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding4.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1+0.05}{1+1}\]</span></p>
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1.05}{2} = 0.525\]</span></p>
+</div>
+</div>
+</section>
+<section id="processando-variáveis-categóricas-4" class="slide level2">
+<h2>Processando variáveis categóricas</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="TargetEncoding5.png" class="quarto-figure quarto-figure-center" style="width:120.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1+0.05}{2+1}\]</span></p>
+<p><strong>Target Encoding</strong> <span class="math display">\[\frac {1.05}{3} = 0.35\]</span></p>
+</div>
+</div>
+</section>
+<section id="árvores-de-decisão-simétricas" class="slide level2">
+<h2>Árvores de decisão Simétricas</h2>
+
+<img data-src="ArvoresSimetricas2.png" style="width:50.0%" class="r-stretch quarto-figure-center"><p class="caption">Youtube: CatBoost Parte 2: Construindo e Usando Árvores</p><ul>
+<li>Gera modelos mais fracos, porém mais simples</li>
+<li>Gera previsões mais rapidamente</li>
+</ul>
+</section>
+<section id="flow-do-modelo-catboost" class="slide level2">
+<h2>Flow do modelo CatBoost</h2>
+<p>Uma forma simplificada de mostrar o funcionamento do Catboost pode ser representada pelo seguinte grafo:</p>
+<div class="center">
+<div class="cell" data-reveal="true" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">graph TD
+
+    A[Entrada de dados] --&gt; B
+    B[Preparação dos Dados] --&gt; B1 &amp; B3
+    B1[Limpeza dos Dados]
+    B3[Divisão Treino/Teste]
+    B1 &amp; B3 --&gt; B_Final[Dados Preparados]
+
+    B_Final --&gt; C[Entrada de Dados no Modelo]
+    
+    C[Entrada de Dados no Modelo] --&gt; K1[Random Permutations]
+    
+    K1[Random Permutations] --&gt; K2[Target Encoding]
+    
+    K2[Target Encoding] --&gt; D[Construção da Primeira Árvore]
+    D --&gt; D1 &amp; D2 &amp; D3
+    D1[Avaliação das Divisões]
+    D2[Construção dos Nós]
+    D3[Combinação das Previsões]
+    D1 &amp; D2 &amp; D3 --&gt; D_Final[Árvore Construída]
+    
+    D_Final --&gt; E[Entrada de Dados Residual para a Segunda Árvore]
+
+    E --&gt; F[Construção da Segunda Árvore]
+    F --&gt; F1 &amp; F2 &amp; F3
+    F1[Avaliação das Divisões]
+    F2[Construção dos Nós]
+    F3[Combinação das Previsões]
+    F1 &amp; F2 &amp; F3 --&gt; F_Final[Segunda Árvore Construída]
+
+    F_Final --&gt; G[Repetir o processo anterior m vezes]
+
+    G --&gt; H[Avaliação do Modelo]
+    
+    H --&gt; I[Ensembling das Árvores com Pesos Relativos]
+
+    I --&gt; J[Modelo final]
+
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="implementação-catboost" class="slide level2">
+<h2>Implementação CatBoost</h2>
+<p><a href="https://www.r-bloggers.com/2020/08/how-to-use-catboost-with-tidymodels/">Vamos à prática!</a></p>
+</section>
 <section id="referências" class="slide level2">
 <h2>Referências</h2>
 <p><a href="https://xgboost.readthedocs.io/_/downloads/en/release_0.80/pdf/">Documentação XGBoost.</a></p>
 <p><a href="https://bdta.abcd.usp.br/directbitstream/6962846b-66bd-4bd6-9f74-2b18bff03234/Pinheiro_JoãoManoelHerrera_tcc.pdf">Pinheiro, João Manoel Herrera. Um estudo sobre Algoritmos de Boosting e a Otimização de Hiperparâmetros Utilizando Optuna. São Carlos, SP. 2023.</a></p>
+<p><a href="https://catboost.ai/docs/en/">Documetação CatBoost</a></p>
+<p><a href="https://towardsdatascience.com/introduction-to-gradient-boosting-on-decision-trees-with-catboost-d511a9ccbd14">Chepenko, Introduction to gradient boosting on decision trees with Catboost</a></p>
+<p><a href="https://www.youtube.com/watch?v=KXOTSkPL2X4">CatBoost Parte 1: Codificação de destino ordenada</a></p>
+<p><a href="https://www.youtube.com/watch?v=3Bg2XRFOTzg">CatBoost Parte 2: Construindo e Usando Árvores</a></p>
 <div class="quarto-auto-generated-content">
 <p><img src="unb.jpg" class="slide-logo"></p>
 <div class="footer footer-default">
