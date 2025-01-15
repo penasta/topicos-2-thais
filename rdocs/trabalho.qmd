@@ -126,7 +126,8 @@ graph TD
 
 ## Implementação XGBoost
 
-Vamos à prática!
+[Vamos à prática!](https://github.com/penasta/topicos-2-thais/blob/main/rdocs/exemplo_xgboost.R)
+
 
 ## Exemplo prático: XGBoost, CatBoost & outros
 

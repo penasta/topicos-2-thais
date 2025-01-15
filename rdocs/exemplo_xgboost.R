@@ -24,8 +24,7 @@ model = boost_tree(mode = "classification",
   set_engine("xgboost")
 
 recipe = recipe(species ~ sepal_length + sepal_width + petal_length + petal_width,
-                data = df) %>%
-  step_dummy(all_nominal_predictors()) 
+                data = df)
 
 wf = workflow() %>%
   add_recipe(recipe) %>%
@@ -40,11 +39,16 @@ set.seed(150167636)
 tic()
 tune_res = tune_grid( 
   wf,
-  resamples = vfold_cv(val, v = 5),
+  resamples = vfold_cv(val, v = 5,strata = species),
   grid = grid,
   metrics = metric_set(accuracy, roc_auc, sens,spec)
 )
 toc()
+
+best_params = tune_res %>%
+  select_best(metric = "roc_auc")
+
+best_params
 
 tune_res %>%
   collect_metrics() %>%
@@ -57,23 +61,14 @@ tune_res %>%
   geom_point(show.legend = FALSE)+
   facet_wrap(~hiperparâmetro, scales = "free_x")
 
-best_params = tune_res %>%
-  select_best(metric = "roc_auc")
-
 best_wf = finalize_workflow(wf, best_params)
-
-best_wf %>%
-  fit(data = train) %>%
-  extract_fit_parsnip() %>%
-  vip(geom = "point")
-
-fit = last_fit(best_wf, split,
-               metrics = metric_set(roc_auc))
-fit %>%
-  collect_metrics()
 
 final_fit <- best_wf %>%
   fit(data = train)
+
+final_fit %>%
+  extract_fit_parsnip() %>%
+  vip(geom = "point")
 
 predictions <- final_fit %>%
   predict(new_data = test)
@@ -154,11 +149,16 @@ set.seed(150167636)
 tic()
 tune_res = tune_grid( 
   wf,
-  resamples = vfold_cv(val, v = 5),
+  resamples = vfold_cv(val, v = 5, strata = salary),
   grid = grid,
   metrics = metric_set(accuracy, roc_auc, sens,spec)
 )
 toc()
+
+best_params = tune_res %>%
+  select_best(metric = "roc_auc")
+
+best_params
 
 tune_res %>%
   collect_metrics() %>%
@@ -171,23 +171,16 @@ tune_res %>%
   geom_point(show.legend = FALSE)+
   facet_wrap(~hiperparâmetro, scales = "free_x")
 
-best_params = tune_res %>%
-  select_best(metric = "roc_auc")
-
 best_wf = finalize_workflow(wf, best_params)
 
-best_wf %>%
-  fit(data = train) %>%
-  extract_fit_parsnip() %>%
-  vip(geom = "point")
-
-fit = last_fit(best_wf, split,
-               metrics = metric_set(roc_auc))
-fit %>%
-  collect_metrics()
-
+tic()
 final_fit <- best_wf %>%
   fit(data = train)
+toc()
+
+final_fit %>%
+  extract_fit_parsnip() %>%
+  vip(geom = "point")
 
 predictions <- final_fit %>%
   predict(new_data = test)
