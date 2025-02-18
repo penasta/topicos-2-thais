@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Khezia Ribeiro">
+<meta name="author" content="Natália Vieira">
+<meta name="dcterms.date" content="2025-01-20">
+
+<title>SVM - Apresentação</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Trabalho SVM_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Trabalho SVM_files/libs/quarto-html/quarto.js"></script>
+<script src="Trabalho SVM_files/libs/quarto-html/popper.min.js"></script>
+<script src="Trabalho SVM_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Trabalho SVM_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Trabalho SVM_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Trabalho SVM_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Trabalho SVM_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Trabalho SVM_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Trabalho SVM_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#pacotes-r-e-suas-funções-svm" id="toc-pacotes-r-e-suas-funções-svm" class="nav-link active" data-scroll-target="#pacotes-r-e-suas-funções-svm">Pacotes R e suas funções SVM</a>
+  <ul class="collapse">
+  <li><a href="#pacote-e1071" id="toc-pacote-e1071" class="nav-link" data-scroll-target="#pacote-e1071">Pacote e1071</a></li>
+  <li><a href="#tidymodels" id="toc-tidymodels" class="nav-link" data-scroll-target="#tidymodels">Tidymodels</a></li>
+  <li><a href="#hiperparâmetros" id="toc-hiperparâmetros" class="nav-link" data-scroll-target="#hiperparâmetros">Hiperparâmetros</a>
+  <ul class="collapse">
+  <li><a href="#c---cost" id="toc-c---cost" class="nav-link" data-scroll-target="#c---cost">C - cost</a></li>
+  <li><a href="#gamma---gamma" id="toc-gamma---gamma" class="nav-link" data-scroll-target="#gamma---gamma"><span class="math inline">\(\gamma\)</span> - gamma</a></li>
+  <li><a href="#epsilon-epsilon-ou-margin" id="toc-epsilon-epsilon-ou-margin" class="nav-link" data-scroll-target="#epsilon-epsilon-ou-margin"><span class="math inline">\(\epsilon\)</span> (epsilon ou margin)</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#apresentação---support-vector-machines-svm" id="toc-apresentação---support-vector-machines-svm" class="nav-link" data-scroll-target="#apresentação---support-vector-machines-svm">Apresentação - Support Vector Machines (SVM)</a>
+  <ul class="collapse">
+  <li><a href="#função-para-construção-dos-gráficos" id="toc-função-para-construção-dos-gráficos" class="nav-link" data-scroll-target="#função-para-construção-dos-gráficos">Função para construção dos gráficos</a></li>
+  <li><a href="#dados" id="toc-dados" class="nav-link" data-scroll-target="#dados">Dados</a></li>
+  <li><a href="#º-exemplo-obesidade-idade-imc" id="toc-º-exemplo-obesidade-idade-imc" class="nav-link" data-scroll-target="#º-exemplo-obesidade-idade-imc">1º exemplo: Obesidade ~ Idade + IMC</a>
+  <ul class="collapse">
+  <li><a href="#divisão-dos-dados-em-conjunto-de-treino-e-de-teste" id="toc-divisão-dos-dados-em-conjunto-de-treino-e-de-teste" class="nav-link" data-scroll-target="#divisão-dos-dados-em-conjunto-de-treino-e-de-teste">Divisão dos dados em conjunto de treino e de teste</a></li>
+  <li><a href="#pré-visualização-dos-dados-de-treino" id="toc-pré-visualização-dos-dados-de-treino" class="nav-link" data-scroll-target="#pré-visualização-dos-dados-de-treino">Pré-visualização dos dados de treino</a></li>
+  <li><a href="#ajuste-do-svm" id="toc-ajuste-do-svm" class="nav-link" data-scroll-target="#ajuste-do-svm">Ajuste do SVM</a></li>
+  <li><a href="#ajuste-pelo-tidymodels" id="toc-ajuste-pelo-tidymodels" class="nav-link" data-scroll-target="#ajuste-pelo-tidymodels">Ajuste pelo tidymodels</a></li>
+  </ul></li>
+  <li><a href="#º-exemplo-obesidade-no-sexo-feminino-pelo-imc" id="toc-º-exemplo-obesidade-no-sexo-feminino-pelo-imc" class="nav-link" data-scroll-target="#º-exemplo-obesidade-no-sexo-feminino-pelo-imc">2º exemplo: Obesidade no sexo feminino pelo IMC</a>
+  <ul class="collapse">
+  <li><a href="#divisão-dos-dados" id="toc-divisão-dos-dados" class="nav-link" data-scroll-target="#divisão-dos-dados">Divisão dos dados</a></li>
+  <li><a href="#pré-visualização" id="toc-pré-visualização" class="nav-link" data-scroll-target="#pré-visualização">Pré-visualização</a></li>
+  <li><a href="#ajuste-do-modelo-nos-dados-de-treinamento" id="toc-ajuste-do-modelo-nos-dados-de-treinamento" class="nav-link" data-scroll-target="#ajuste-do-modelo-nos-dados-de-treinamento">Ajuste do modelo nos dados de treinamento</a></li>
+  <li><a href="#ajuste-pelo-tidymodels-1" id="toc-ajuste-pelo-tidymodels-1" class="nav-link" data-scroll-target="#ajuste-pelo-tidymodels-1">Ajuste pelo tidymodels</a></li>
+  </ul></li>
+  <li><a href="#referências" id="toc-referências" class="nav-link" data-scroll-target="#referências">Referências</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">SVM - Apresentação</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-contents">
+             <p>Khezia Ribeiro </p>
+             <p>Natália Vieira </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 20, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="pacotes-r-e-suas-funções-svm" class="level1">
+<h1>Pacotes R e suas funções SVM</h1>
+<p>Para essa apresentação foram utilizados os seguintes pacotes:</p>
+<ul>
+<li><p><strong>dplyr e stringr:</strong> manipulação dos dados</p></li>
+<li><p><strong>ggplot2:</strong> Visualização gráfica</p></li>
+<li><p><strong>e1071:</strong> algoritmo SVM</p></li>
+<li><p><strong>tidymodels:</strong> algoritmo SVM</p></li>
+<li><p><strong>LiblineaR:</strong> engine “LiblineaR”</p></li>
+<li><p><strong>kernlab:</strong> engine no tidymodels “kernlab”</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(dplyr, stringr, ggplot2, e1071, tidymodels, kernlab)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="pacote-e1071" class="level2">
+<h2 class="anchored" data-anchor-id="pacote-e1071">Pacote e1071</h2>
+<p>A função para o Support Vector Machine é a <code>svm()</code> . Abaixo se encontram os principais argumentos usado nela:</p>
+<ul>
+<li><p>scale: trata do escalonamento dos dados, seu default é TRUE.</p></li>
+<li><p>type: como será utilizado, isto é, para classificação ou regressão. Para classificação, define-se “C-classification”, e para regressão é usado “eps-regression”.</p></li>
+<li><p>kernel: o kernel que será utilizado para ajuste do modelo. Dependendo do kernel escolhido é necessário alterar alguns parâmetros na função <code>svm()</code>.</p>
+<ul>
+<li><p>linear</p></li>
+<li><p>radial (RFB Gaussiano)</p></li>
+<li><p>polinominal</p></li>
+</ul></li>
+<li><p>cost: hiperparâmetro C</p></li>
+<li><p>epsilon: hiperparâmetro <span class="math inline">\(\epsilon\)</span></p></li>
+<li><p>gamma: utilizado em todos os kernels, menos o linear (default = <span class="math inline">\(\frac{1}{dim(dados)}\)</span>)</p></li>
+<li><p>degree: grau do polimômio (default = 3)</p></li>
+</ul>
+</section>
+<section id="tidymodels" class="level2">
+<h2 class="anchored" data-anchor-id="tidymodels">Tidymodels</h2>
+<p>Existem algumas funções no tidymodels para o algoritmo de SVM. Nessa apresentação, utilizaremos duas: <code>svm_linear()</code> e <code>svm_poly()</code> .</p>
+<ul>
+<li><p><strong>svm_linear()</strong></p>
+<ul>
+<li><p>mode: define se será um SVM para classificação (“classification”) ou regressão (“regression”)</p></li>
+<li><p>engine: pacote ou sistema que será utilizado para ajuste do modelo. No caso dessa função, ele aceita <code>LiblineaR</code> ou <code>kernlab</code> .</p>
+<ul>
+<li><p>Ambas precisam de escalonamento dos dados previamente e variáveis categóricas ou como fatores devem ser transformadas para numéricas. No caso dessa última característica, ao utilizar o <code>fit()</code> o parnsnip já realiza a transformação.</p></li>
+<li><p>O <code>kernlab</code> não estima as probabilidades das classes naturalmente. Para isso, os valores de decisão do modelo são convertidos para probabilidades usando a escala Pratt. Esse método ajusta um modelo adicional em cima do modelo SVM. Além disso, pelo método da escala Pratt, os números aleatórios que foram utilizados não são reproduzíveis ou controlados pelo fluxo de números aleatórios do R.</p></li>
+</ul></li>
+<li><p>cost: hiperparâmetro C</p></li>
+<li><p>margin: hiperparâmetro <span class="math inline">\(\epsilon\)</span></p></li>
+</ul></li>
+<li><p><strong>svm_poly()</strong></p>
+<ul>
+<li><p>Funciona da mesma maneira que o <code>svm_linear()</code>, exceto que para engine ele aceita a <code>kernlab</code> .</p></li>
+<li><p>Acréscimo do parâmetro <code>degree</code> , que indica o grau do polinômio.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="hiperparâmetros" class="level2">
+<h2 class="anchored" data-anchor-id="hiperparâmetros">Hiperparâmetros</h2>
+<section id="c---cost" class="level3">
+<h3 class="anchored" data-anchor-id="c---cost">C - cost</h3>
+<p>Indica o tamanho da margem, tendo influência direto na quantidade de violações das margens. Um valor menor de <strong>C</strong> leva a uma via mais larga, mas com mais violações das margens.</p>
+<p>Se o modelo estiver sobreajustado, pode-se reduzir o valor de C para tentar regularizá-lo.</p>
+</section>
+<section id="gamma---gamma" class="level3">
+<h3 class="anchored" data-anchor-id="gamma---gamma"><span class="math inline">\(\gamma\)</span> - gamma</h3>
+<p>Utilizado principalmente com um kernel radial, ele age como hiperparâmetro de regularização. No caso de sobreajuste, é necessário reduzí-lo e o contrário é feito para o cenário de subajuste.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/clipboard-688070399.png" class="img-fluid figure-img"></p>
+<figcaption>Fonte: “Aurélien Géron. Mãos à Obra: Aprendizado de Máquina com Scikit-Learn &amp; TensorFlow”</figcaption>
+</figure>
+</div>
+</section>
+<section id="epsilon-epsilon-ou-margin" class="level3">
+<h3 class="anchored" data-anchor-id="epsilon-epsilon-ou-margin"><span class="math inline">\(\epsilon\)</span> (epsilon ou margin)</h3>
+<p>Indica a largura da via, principalmente para uma regressão SVM. Adicionar mais instâncias de treinamento dentro da margem não afeta as previsões do modelo. Assim, esse hiperparâmetro também é chamado de SVM insensitive loss function.</p>
+</section>
+</section>
+</section>
+<section id="apresentação---support-vector-machines-svm" class="level1">
+<h1>Apresentação - Support Vector Machines (SVM)</h1>
+<section id="função-para-construção-dos-gráficos" class="level3">
+<h3 class="anchored" data-anchor-id="função-para-construção-dos-gráficos">Função para construção dos gráficos</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>make.grid <span class="ot">=</span> <span class="cf">function</span>(x, <span class="at">n =</span> <span class="dv">100</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  x1 <span class="ot">=</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(x[,<span class="dv">1</span>]), <span class="at">to =</span> <span class="fu">max</span>(x[,<span class="dv">1</span>]), <span class="at">length =</span> n)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  x2 <span class="ot">=</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(x[,<span class="dv">2</span>]), <span class="at">to =</span> <span class="fu">max</span>(x[,<span class="dv">2</span>]), <span class="at">length =</span> n)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand.grid</span>(<span class="at">X1 =</span> x1, <span class="at">X2 =</span> x2)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="dados" class="level2">
+<h2 class="anchored" data-anchor-id="dados">Dados</h2>
+<p>Os dados utilizados foram do Kaggle com o nome <a href="https://www.kaggle.com/datasets/ruchikakumbhar/obesity-prediction">Obesity Prediction Dataset</a>. Para essa apresentação só serão utilizadas 5 variáveis do banco de dados original, sendo elas:</p>
+<ul>
+<li><p>Sexo (feminino ou masculino)</p></li>
+<li><p>Idade</p></li>
+<li><p>Peso (kg)</p></li>
+<li><p>Altura (m)</p></li>
+<li><p>Obesidade (Obeso ou Não obeso)</p></li>
+</ul>
+<p>Também, foi criada a variável IMC, calculada a partir das variáveis Peso e Altura pela fórmula:</p>
+<p><span class="math display">\[
+IMC = Peso(kg)/Altura(m)^2
+\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>obesidade <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"Obesity prediction.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Sexo =</span> Gender, <span class="at">Idade =</span> Age, <span class="at">Altura =</span> Height, <span class="at">Peso =</span> Weight, <span class="at">Obesidade =</span> Obesity) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">IMC =</span> Peso<span class="sc">/</span>(Altura<span class="sc">^</span><span class="dv">2</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">Sexo =</span> <span class="fu">factor</span>(Sexo, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Female"</span>, <span class="st">"Male"</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">Obesidade =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(<span class="fu">str_detect</span>(Obesidade, <span class="st">"^Obesity"</span>), </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"Obeso"</span>, <span class="st">"Não obeso"</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                            <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Obeso"</span>, <span class="st">"Não obeso"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Sexo, Idade, Altura, Peso, IMC, Obesidade)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Medidas</th>
+<th>Idade</th>
+<th>Peso</th>
+<th>Altura</th>
+<th>IMC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Média</td>
+<td>24,31</td>
+<td>86,59</td>
+<td>1,70</td>
+<td>29,7</td>
+</tr>
+<tr class="even">
+<td>Desvio Padrão</td>
+<td>6,35</td>
+<td>26,19</td>
+<td>0,09</td>
+<td>8,01</td>
+</tr>
+<tr class="odd">
+<td>Mínimo</td>
+<td>14</td>
+<td>39</td>
+<td>1,45</td>
+<td>13</td>
+</tr>
+<tr class="even">
+<td>1º Quartil</td>
+<td>19,95</td>
+<td>65,47</td>
+<td>1,63</td>
+<td>24,33</td>
+</tr>
+<tr class="odd">
+<td>Mediana</td>
+<td>22,78</td>
+<td>83</td>
+<td>1,7</td>
+<td>28,72</td>
+</tr>
+<tr class="even">
+<td>3º Quartil</td>
+<td>26</td>
+<td>107,43</td>
+<td>1,77</td>
+<td>36,02</td>
+</tr>
+<tr class="odd">
+<td>Máximo</td>
+<td>61</td>
+<td>173</td>
+<td>1,98</td>
+<td>50,81</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="º-exemplo-obesidade-idade-imc" class="level2">
+<h2 class="anchored" data-anchor-id="º-exemplo-obesidade-idade-imc">1º exemplo: Obesidade ~ Idade + IMC</h2>
+<section id="divisão-dos-dados-em-conjunto-de-treino-e-de-teste" class="level3">
+<h3 class="anchored" data-anchor-id="divisão-dos-dados-em-conjunto-de-treino-e-de-teste">Divisão dos dados em conjunto de treino e de teste</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>obs_class1 <span class="ot">&lt;-</span> obesidade <span class="sc">%&gt;%</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Idade, IMC, Obesidade)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">25</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>obesidade_split_1 <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(obs_class1, <span class="at">prop =</span> <span class="fl">0.7</span>) </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>treino<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">training</span>(obesidade_split_1)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>teste<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">testing</span>(obesidade_split_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>O banco foi dividido em 70% para o conjunto de treino e 30% para o conjunto de teste, totalizando 1477 e 634 observações para cada, respectivamente.</p>
+</section>
+<section id="pré-visualização-dos-dados-de-treino" class="level3">
+<h3 class="anchored" data-anchor-id="pré-visualização-dos-dados-de-treino">Pré-visualização dos dados de treino</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> treino<span class="fl">.1</span>, </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> Idade,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">y =</span> IMC,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">colour =</span> Obesidade),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"IMC"</span>) <span class="sc">+</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Idade"</span>) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Gráfico de dispersão do conjunto de treino"</span>)<span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Trabalho-SVM_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="ajuste-do-svm" class="level3">
+<h3 class="anchored" data-anchor-id="ajuste-do-svm">Ajuste do SVM</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#SVM linear</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>svm1 <span class="ot">&lt;-</span>  <span class="fu">svm</span>(<span class="at">formula =</span> Obesidade <span class="sc">~</span> .,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> treino<span class="fl">.1</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>             <span class="at">type =</span> <span class="st">'C-classification'</span>, <span class="co"># classificação</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">kernel =</span> <span class="st">'linear'</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">cost =</span> <span class="dv">1</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>pred1 <span class="ot">&lt;-</span> <span class="fu">predict</span>(svm1, teste<span class="fl">.1</span>, <span class="at">type =</span> <span class="st">"decision"</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(teste<span class="fl">.1</span><span class="sc">$</span>Obesidade, pred1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           pred1
+            Obeso Não obeso
+  Obeso       293         2
+  Não obeso     2       337</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>x.ex1 <span class="ot">&lt;-</span> teste<span class="fl">.1</span>[,<span class="sc">-</span><span class="dv">3</span>] <span class="co">#selecionando as variáveis idade e imc</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># criando grid</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>xgrid.ex1 <span class="ot">&lt;-</span>  <span class="fu">make.grid</span>(<span class="fu">as.matrix</span>(x.ex1), <span class="at">n =</span> <span class="dv">100</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># colocando o nome das variáveis em suas respectivas colunas</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(xgrid.ex1) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Idade"</span>, <span class="st">"IMC"</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># selecionando os valores reais da classificação</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>y.ex1 <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">as.factor</span>(teste<span class="fl">.1</span><span class="sc">$</span>Obesidade))</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># realizando a previsão </span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>ygrid.ex1 <span class="ot">=</span> <span class="fu">predict</span>(svm1, xgrid.ex1)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># visualização dos resultados</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(xgrid.ex1, <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"pink"</span>,<span class="st">"green"</span>)[<span class="fu">as.numeric</span>(ygrid.ex1)], <span class="at">pch =</span> <span class="dv">20</span>, <span class="at">cex =</span> .<span class="dv">2</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(x.ex1, <span class="at">col =</span> y.ex1 <span class="sc">+</span> <span class="dv">1</span>, <span class="at">pch =</span> <span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Trabalho-SVM_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="ajuste-pelo-tidymodels" class="level3">
+<h3 class="anchored" data-anchor-id="ajuste-pelo-tidymodels">Ajuste pelo tidymodels</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tidymodels</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>svm_linear_kernlab <span class="ot">&lt;-</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">svm_poly</span>(<span class="at">degree=</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_args</span>(<span class="at">cost =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">'kernlab'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">'classification'</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ajuste do modelo</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>svm_tidy_1 <span class="ot">&lt;-</span> svm_linear_kernlab <span class="sc">%&gt;%</span> </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(Obesidade <span class="sc">~</span> Idade <span class="sc">+</span> IMC, <span class="at">data =</span> treino<span class="fl">.1</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co"># predição dos valores</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>pred1_tidy <span class="ot">&lt;-</span> <span class="fu">predict</span>(svm_tidy_1, teste<span class="fl">.1</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(teste<span class="fl">.1</span><span class="sc">$</span>Obesidade, pred1_tidy<span class="sc">$</span>.pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           
+            Obeso Não obeso
+  Obeso       293         2
+  Não obeso     2       337</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="º-exemplo-obesidade-no-sexo-feminino-pelo-imc" class="level2">
+<h2 class="anchored" data-anchor-id="º-exemplo-obesidade-no-sexo-feminino-pelo-imc">2º exemplo: Obesidade no sexo feminino pelo IMC</h2>
+<section id="divisão-dos-dados" class="level3">
+<h3 class="anchored" data-anchor-id="divisão-dos-dados">Divisão dos dados</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Classificador 2: Obesidade - Sexo(feminino) + IMC</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>obs_class2 <span class="ot">&lt;-</span> obesidade <span class="sc">%&gt;%</span> </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Sexo <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Sexo, IMC, Obesidade)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">25</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>obesidade_split_2 <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(obs_class2, <span class="at">prop =</span> <span class="fl">0.7</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>treino<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">training</span>(obesidade_split_2) </span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>teste<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">testing</span>(obesidade_split_2) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>O banco foi dividido em 70% para o conjunto de treino e 30% para o conjunto de teste, totalizando 730 e 313 observações para cada, respectivamente.</p>
+</section>
+<section id="pré-visualização" class="level3">
+<h3 class="anchored" data-anchor-id="pré-visualização">Pré-visualização</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plotando os dados da base</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> obs_class2, </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> IMC,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">y =</span> Sexo,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">colour =</span> Obesidade),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"IMC"</span>) <span class="sc">+</span> </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Sexo"</span>) <span class="sc">+</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Trabalho-SVM_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="ajuste-do-modelo-nos-dados-de-treinamento" class="level3">
+<h3 class="anchored" data-anchor-id="ajuste-do-modelo-nos-dados-de-treinamento">Ajuste do modelo nos dados de treinamento</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#SVM polinomial de grau 2</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>svm2 <span class="ot">&lt;-</span> <span class="fu">svm</span>(<span class="at">formula =</span> Obesidade <span class="sc">~</span> .,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">data =</span> treino<span class="fl">.2</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">type =</span> <span class="st">'C-classification'</span>, <span class="co">#classificação</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">kernel =</span> <span class="st">'polynomial'</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">degree =</span> <span class="dv">2</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">cost =</span> <span class="dv">1</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>pred2 <span class="ot">&lt;-</span> <span class="fu">predict</span>(svm2, teste<span class="fl">.2</span>, <span class="at">type =</span> <span class="st">"decision"</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(teste<span class="fl">.2</span><span class="sc">$</span>Obesidade, pred2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           pred2
+            Obeso Não obeso
+  Obeso       131         0
+  Não obeso     1       181</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> obs_class2, </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> IMC,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">y =</span> IMC<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">colour =</span> Obesidade),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"IMC"</span>) <span class="sc">+</span> </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"IMC²"</span>) <span class="sc">+</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Trabalho-SVM_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="ajuste-pelo-tidymodels-1" class="level3">
+<h3 class="anchored" data-anchor-id="ajuste-pelo-tidymodels-1">Ajuste pelo tidymodels</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tidymodels</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>svm_linear_kernlab <span class="ot">&lt;-</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">svm_poly</span>(<span class="at">degree=</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_args</span>(<span class="at">cost =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">'kernlab'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">'classification'</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>svm_tidy_2 <span class="ot">&lt;-</span> svm_linear_kernlab <span class="sc">%&gt;%</span> </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(Obesidade <span class="sc">~</span> Sexo <span class="sc">+</span> IMC, <span class="at">data =</span> treino<span class="fl">.2</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>pred2_tidy <span class="ot">&lt;-</span> <span class="fu">predict</span>(svm_tidy_2, teste<span class="fl">.2</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(teste<span class="fl">.2</span><span class="sc">$</span>Obesidade, pred2_tidy<span class="sc">$</span>.pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           
+            Obeso Não obeso
+  Obeso       131         0
+  Não obeso     1       181</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="referências" class="level2">
+<h2 class="anchored" data-anchor-id="referências">Referências</h2>
+<p><a href="https://www.rdocumentation.org/packages/e1071/versions/1.7-16/topics/svm">Pacote e1071 - svm()</a></p>
+<p><a href="https://rpubs.com/Ian_M/666939">Support Vector Machines - Rpubs</a></p>
+<p><a href="https://parsnip.tidymodels.org/reference/svm_linear.html">SVM Linear - Parnsnip (Tidymodels)</a></p>
+<p><a href="https://parsnip.tidymodels.org/reference/details_svm_linear_LiblineaR.html">SVM Linear via LiblineaR - Parnsinp (tidymodels)</a></p>
+<p><a href="https://rdrr.io/cran/LiblineaR/">Documentação LiblineaR</a></p>
+<p><a href="https://parsnip.tidymodels.org/reference/details_svm_linear_kernlab.html">SVM Linear via kernlab - Parnsnip (Tidymodels)</a></p>
+<p><a href="https://parsnip.tidymodels.org/reference/svm_poly.html">SVM Polinomial - Parnsnip (Tidymodels)</a></p>
+<p><a href="https://www.datacamp.com/tutorial/support-vector-machines-r">Support Vector Machines R</a></p>
+<p><a href="https://emilhvitfeldt.github.io/ISLR-tidymodels-labs/09-support-vector-machines.html">ISRL tidymodels lab - Support Vector Machines</a></p>
+<p>Livro texto. Aurélien Géron. Mãos à Obra: Aprendizado de Máquina com Scikit-Learn &amp; TensorFlow.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

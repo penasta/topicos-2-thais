@@ -1,0 +1,488 @@
+---
+title: "Classificação binária aplicada a dados do Supremo Tribunal Federal"
+author:
+  - name: Bruno Gondim Toledo
+    affiliation: 
+      - name: Universidade de Brasília - UnB
+    url: https://github.com/penasta
+  - name: João Victor de Oliveira Nogueira
+date: "`r Sys.Date()`"
+output: html_document
+geometry: a4paper
+fontsize: 12pt
+abstract: "Neste trabalho, buscamos realizar uma classificação binária utilizando dados públicos disponibilizados pelo Supremo Tribunal Federal. Selecionou-se a classe do processo, o nome do ministro que proferiu a decisão, uma covariável indicadora se a decisão foi monocrática ou não e o ramo do direito do processo. Utilizaremos estas covariáveis para tentar modelar o tipo de decisão, se foi favorável ao réu ou se a decisão foi desfavorável ao réu. Para isso, testaremos diversas abordagens de classificação binária, sempre utilizando o framework tidymodels."
+format:
+  html:
+    code-fold: true
+    code-summary: "Mostrar o código"
+toc: true
+---
+
+```{r, results='hide',message=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(MASS,tidyverse, readxl, janitor,xgboost,tidymodels,vip,rpart.plot,
+               conflicted,tictoc,finetune,doParallel,DataExplorer,future,
+               gridExtra,compareGroups,DT,naivebayes,discrim,baguette,progressr,
+               corrplot,skimr,GGally,glmnet,class,themis,kknn,gt,ranger,
+               kernlab,qgraph)
+
+conflicts_prefer(dplyr::filter)
+tidymodels_prefer()
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, cache=TRUE}
+df <- read_excel("../dados/decisoes_24.xlsx", na = c("-",NA))
+```
+
+Primeiramente, os dados necessitam de algumas etapas de engenharia de *features*, afim de obter variáveis mais adequadas para modelagem, eliminando também fatores redundantes, codificando de forma melhorada para visualização gráfica e binarização do tipo de decisão.
+
+```{r, cache=TRUE}
+
+df = clean_names(df)
+
+df <- df %>%
+  mutate(favoravel_reu = case_when(
+    andamento_decisao %in% c("Agravo de instrumento provido", "Agravo provido e desde logo provido o RE", 
+                             "Agravo provido e desde logo provido parcialmente o RE", "Agravo provido e determinada a devolução pelo regime da repercussão geral", 
+                             "Concedida a ordem", "Concedida a ordem de ofício", "Concedida a segurança", "Concedida a suspensão", 
+                             "Concedida em parte a ordem", "Concedida em parte a segurança", "Conhecido e provido", 
+                             "Conhecido e provido em parte", "Homologado o acordo", "Procedente", "Procedente em parte", 
+                             "Provido", "Provido em parte", "Revogada a prisão") ~ '1',
+    andamento_decisao %in% c("Agravo não provido", "Agravo provido e desde logo negado seguimento ao RE", 
+                             "Conhecido e negado provimento", "Conhecido em parte e nessa parte negado provimento", 
+                             "Denegada a ordem", "Denegada a segurança", "Denegada a suspensão", 
+                             "Determinado arquivamento", "Extinto o processo", "Improcedente", 
+                             "Não provido", "Negado seguimento", "Negado seguimento por ausência de preliminar, art. 327 do RISTF", 
+                             "Rejeitada a denúncia", "Rejeitada a queixa", "Rejeitados") ~ '0',
+    TRUE ~ "outros"
+  )) %>%
+  dplyr::filter(favoravel_reu %in% c('0','1')) %>%
+  mutate(ramo_direito = str_extract(ramo_direito, "^[^|]+") %>% str_trim()) %>%
+  select(classe,nome_ministro_a,indicador_virtual,origem_da_decisao,ramo_direito,favoravel_reu)%>%
+  mutate(across(everything(), as.factor)) %>%
+  mutate(indicador_virtual = factor(ifelse(indicador_virtual == "MONOCRÁTICA", "Monocrática", "Não monocrática"))) %>%
+  select(-origem_da_decisao) %>%
+  rename(tipo = indicador_virtual,
+         ministro = nome_ministro_a)
+
+# Análise descritiva ----
+data = df %>% mutate(favoravel_reu = factor(ifelse(favoravel_reu == 0,"Decisão desfavorável ao réu","Decisão favorável ao réu"))) %>% as.data.frame()
+
+levels(data$ramo_direito) <- c("Educação", # "DIREITO À EDUCAÇÃO"  
+                               "Adm Público", # "DIREITO ADMINISTRATIVO E OUTRAS MATÉRIAS DE DIREITO PÚBLICO"
+                               "Ambiental", # "DIREITO AMBIENTAL"
+                               "Assistencial", # "DIREITO ASSISTENCIAL" 
+                               "Civil", # "DIREITO CIVIL"
+                               "Criança e Adolescente", # "DIREITO DA CRIANÇA E DO ADOLESCENTE"
+                               "Saúde", # "DIREITO DA SAÚDE"
+                               "Consumidor", # "DIREITO DO CONSUMIDOR"
+                               "Trabalho", # "DIREITO DO TRABALHO"
+                               "Eleitoral", # "DIREITO ELEITORAL"
+                               "Eleitoral STF", # "DIREITO ELEITORAL E PROCESSO ELEITORAL DO STF"
+                               "Internacional", # "DIREITO INTERNACIONAL"
+                               "Marítimo", # "DIREITO MARÍTIMO"
+                               "Penal", # "DIREITO PENAL"
+                               "Penal Militar", #"DIREITO PENAL MILITAR"
+                               "Previdenciário", # "DIREITO PREVIDENCIÁRIO"
+                               "Processual Civil e Trabalho", # "DIREITO PROCESSUAL CIVIL E DO TRABALHO"
+                               "Processual Penal", # "DIREITO PROCESSUAL PENAL"
+                               "Processual Penal Militar", # "DIREITO PROCESSUAL PENAL MILITAR"
+                               "Tributário", # "DIREITO TRIBUTÁRIO"
+                               "Alta Complexidade", # "QUESTÕES DE ALTA COMPLEXIDADE, GRANDE IMPACTO E REPERCUSSÃO"
+                               "Registros Públicos" # "REGISTROS PÚBLICOS"
+                               )
+
+levels(data$ministro) <- c("Min. Alexandre de Moraes",
+                                  "Min. André Mendonça",
+                                  "Min. Cármen Lúcia",
+                                  "Min. Cristiano Zanin",
+                                  "Min. Dias Toffoli",
+                                  "Min. Edson Fachin",
+                                  "Min. Flávio Dino",
+                                  "Min. Gilmar Mendes",
+                                  "Min. Luiz Fux",
+                                  "Min. Nunes Marques")
+
+rm(df)
+
+```
+
+Podemos construir gráficos, afim de avaliar se existe variância nas covariáveis — pré requisito fundamental para uma modelagem classificatória.
+
+```{r, cache=TRUE}
+p1 = ggplot(data, aes(x = classe, fill = favoravel_reu)) +
+  geom_bar(position = "fill") +
+  labs(title = "",x = "", y = "Prop") +
+  theme_minimal() +
+  coord_flip() +
+  theme(legend.position = "top")
+
+p2 = ggplot(data, aes(x = ministro, fill = favoravel_reu)) +
+  geom_bar(position = "fill") +
+  labs(title = "",x = "", y = "Prop") +
+  theme_minimal() +
+  coord_flip() +
+  theme(legend.position = "top")
+
+p3 = ggplot(data, aes(x = tipo, fill = favoravel_reu)) +
+  geom_bar(position = "fill") +
+  labs(title = "",x = "", y = "Prop") +
+  theme_minimal() +
+  coord_flip() +
+  theme(legend.position = "top")
+
+p4 = ggplot(data, aes(x = ramo_direito, fill = favoravel_reu)) +
+  geom_bar(position = "fill") +
+  labs(title = "",x = "", y = "Prop") +
+  theme_minimal() +
+  coord_flip() +
+  theme(legend.position = "top")
+
+```
+
+## Decisão por classe
+
+```{r, cache=TRUE}
+p1 
+```
+
+Notamos que é bastante heterogêneo o tipo de decisão de acordo com a classe processual, o que indica que esta variável possivelmente será importante na modelagem.
+
+## Ministro
+
+```{r, cache=TRUE}
+p2
+```
+
+Quanto ao ministro que proferiu a decisão, existe uma distribuição mais uniforme do que em relação à classe. Ainda assim, é possível ver diferenças em alguns casos, e também a combinação desta covariável com outras pode ser bastante heterogênea.
+
+## Tipo de decisão
+
+```{r, cache=TRUE}
+p3
+```
+
+Aqui vemos uma grande diferença, onde decisões não monocráticas são fortemente mais inclinadas a serem favoráveis ao réu ante as monocráticas. Ainda assim, é importante notar que as decisões monocráticas representam mais de 90% do conjunto de dados.
+
+## Decisão por ramo do direito
+
+```{r, cache=TRUE}
+p4
+```
+
+Assim como na classe do processo, o ramo do direito também é bastante heterogêneo, e possivelmente significativo na modelagem.
+
+Podemos produzir uma tabela para entender melhor estas proporções para cada um dos dois grupos
+
+```{r, cache=TRUE}
+comp = compareGroups(favoravel_reu ~ .,
+                     data=data, method = 4, max.ylev=100, max.xlev=100)
+table = createTable(comp)
+export2md(table,
+          strip=TRUE,
+          first.strip=TRUE,
+          format='html',
+          size = 10,
+          caption = "")
+```
+
+O teste qui-quadrado que acompanha a tabela na ultima coluna mostra diferença entre as categorias para todos os casos.
+
+# Modelagem
+
+Todas as nossas covariáveis são categóricas, e desejamos realizar uma classificação binária. Para isto, utilizaremos o tidymodels, com modelos apropriados para este tipo de modelagem. Faremos comparação da performance de diversos modelos afim de selecionar o melhor.
+
+## Divisão treino-teste
+
+```{r, cache=TRUE}
+data = data %>%
+  mutate(favoravel_reu = factor(ifelse(favoravel_reu == "Decisão desfavorável ao réu",0,1)))
+
+set.seed(150167636)
+split <- initial_split(data, prop = 0.80, strata = favoravel_reu)
+treino <- training(split)
+teste <- testing(split)
+```
+
+```{r, cache=TRUE}
+set.seed(150167636)
+cv_folds <- vfold_cv(treino, 
+                     v = 3, 
+                     strata = favoravel_reu)
+```
+
+
+Faremos uma divisão clássica de treino e teste, com proporção 80-20. Estratificamos estes conjuntos pela variável explicativa, e utilizaremos validação cruzada para validação de hiperparâmetros dos modelos.
+
+Fizemos já também a re-condificação da variável resposta, sendo 0: decisão desfavorável ao réu, e 1: decisão favorável ao réu.
+
+## Receita
+
+```{r, cache=TRUE}
+receita <- recipe(favoravel_reu ~ ., data = data) %>%
+  # step_interact(terms = ~ all_factor_predictors():all_factor_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>% 
+  step_nzv(all_numeric_predictors())
+```
+
+Neste caso, utilizaremos uma receita bem simples, simplesmente criando dummys para todas as covariáveis, e removendo alguma possível coluna de apenas zeros.
+
+## Visualizando dados após aplicar receita
+
+```{r, cache=TRUE}
+receita %>%
+  prep() %>%
+  juice() %>%
+  head(10) %>%
+  datatable()
+```
+
+Podemos ver agora que nossos dados são simplesmente colunas de zeros e uns.
+
+## Workflow
+
+O nosso objetivo neste trabalho não será somente tentar modelar estes dados, mas testar diversos modelos entre os vistos (e também alguns não vistos) em aula, afim de fazer comparação de eficiência entre os modelos para este conjunto de dados. O {framework} do {tidymodels} favorece este tipo de aplicação, sendo possível trabalhar com diversos modelos existentes no pacote, seja para regressão, seja para classificação (nesta caso, estaremos fazendo classificação), e depois aproveitar de funções do tidymodels para compará-los todos de uma vez.
+
+Selecionou-se o Knn, Naive Bayes, discriminantes linear e quadrático, regressão logística, árvore de decisão, floresta de decisão de floresta de decisão com *bagging* para esta aplicação. Foram testados preliminarmente modelos de SVM e XGBoost também, porém estes demoravam demais (mais de um dia executando), portanto não se mostraram nada parcimoniosos, o que inviabilizaram a sua utilização neste relatório. Havia também a intenção de utilização do Catboost, que possivelmente performaria bem sobre este conjunto de dados, que é totalmente categórico. Infelizmente, o suporte para R foi depreciado, e até tentamos utilizá-lo em sua forma legada, mas não funcionou apesar de diversas tentativas. Desta forma, ficamos com 8 modelos.
+
+```{r, cache=TRUE}
+knn_spec <- nearest_neighbor(neighbors = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("kknn")
+
+nbayes_spec <- naive_Bayes(smoothness = tune(), Laplace = tune()) %>%
+  set_engine("klaR") %>%
+  set_mode("classification")
+
+lda_spec <- discrim_linear() %>%
+  set_engine("MASS") %>%
+  set_mode("classification")
+
+qda_spec <- discrim_quad() %>%
+  set_engine("MASS") %>%
+  set_mode("classification")
+
+reg_log_spec <- logistic_reg(penalty = tune(), mixture = tune()) %>%
+  set_engine(engine = "glmnet", standardize = FALSE) %>%
+  set_mode("classification")
+
+dec_tree <- decision_tree(cost_complexity = tune(),
+                          min_n = tune(),
+                          tree_depth = tune()) %>%
+  set_engine(engine = "rpart") %>%
+  set_mode("classification")
+
+bagg_tree <- bag_tree(cost_complexity = tune(),
+                      min_n = tune(),
+                      tree_depth = tune()) %>%
+  set_engine(engine = "rpart") %>%
+  set_mode("classification")
+
+random_forestst <- rand_forest(min_n = tune(),
+                             trees = tune()) %>%
+  set_engine(engine = "ranger", importance = "impurity") %>%
+  set_mode("classification")
+
+```
+
+```{r, cache=TRUE}
+wf = workflow_set(
+  preproc = list(receita),
+  models = list(
+    KNN = knn_spec,
+    Naive_Bayes = nbayes_spec,
+    LDA = lda_spec,
+    QDA = qda_spec,
+    Reg_log = reg_log_spec,
+    decision = dec_tree,
+    bag_tree = bagg_tree,
+    random_forest = random_forestst
+  )
+) %>%
+  mutate(wflow_id = gsub("(recipe_)", "", wflow_id))
+```
+
+Destes modelos, iremos fazer diversos ajustes de hiperparâmetros, afim de selecionar não só o melhor modelo, mas também a melhor combinação de hiperparâmetros. construiu-se portanto com grid de 20 combinações de hiperparâmetros para cada modelo, utilizando um hipercubo latino. Estes serão avaliados por validação cruzada. Fizemos a divisão treino-teste 80%/20%, e do conjunto de treino selecionamos a técnica *v-folds cross validation*, com $v=3$. Salvo os modelos de discriminante linear e quadrático que não realizamos ajuste de hiperparâmetros — serão treinados portanto $3 \times 2 = 6$ modelos deste tipo — os demais modelos serão treinados $20 \times 3 = 60$ vezes cada, totalizando $20 \times 3 \times 6 + 2 \times 3 = 366$ modelos ao todo que serão ajustados, para um conjunto de dados relativamente grande. Portanto, este ajuste demorou cerca de 20 minutos para rodar, o que é relativamente aceitável dado o tamanho do conjunto de dados e a quantidade de modelos que estamos ajustando.
+
+```{r, cache=TRUE}
+plan(multisession)
+
+grid_ctrl = control_grid(
+  save_pred = TRUE,
+  parallel_over = "resamples",
+  save_workflow = TRUE
+)
+
+grid_results = wf %>%
+  workflow_map(
+    seed = 150167636,
+    resamples = cv_folds,
+    grid = 20,
+    control = grid_ctrl
+  )
+```
+
+## Comparando modelos
+
+```{r, cache=TRUE}
+autoplot(grid_results)
+```
+
+Pelo gráfico comparando os modelos ajustados, notamos que o que teve melhor ajuste aparenta ter sido o modelo de florestas aleatórias, obtendo a maior acurácia e maior proporção de área sobre a curva ROC. Árvores com bagging e árvores de decisão também performaram bem, indicando que neste caso os modelos de árvores aparentam ter sido os melhores.
+
+```{r, cache=TRUE}
+autoplot(grid_results, select_best = TRUE, metric = "roc_auc")
+```
+
+Analisando a performance da melhor combinação de hiperparâmetros para cada modelo testado, notamos novamente que os três melhores modelos são os baseados em árvores. O pior algoritmo foi o KNN, seguido do naive bayes.
+
+```{r, cache=TRUE, warning=FALSE}
+best_set_linear = grid_results %>% 
+  extract_workflow_set_result("Reg_log") %>% 
+  select_best(metric = "accuracy")
+
+best_set_knn = grid_results %>% 
+  extract_workflow_set_result("KNN") %>% 
+  select_best(metric = "accuracy")
+
+best_set_nbayes = grid_results %>%
+  extract_workflow_set_result("Naive_Bayes") %>% 
+  select_best(metric = "accuracy")
+
+best_set_lda = grid_results %>% 
+  extract_workflow_set_result("LDA") %>% 
+  select_best(metric = "accuracy")
+
+best_set_qda = grid_results %>% 
+  extract_workflow_set_result("QDA") %>% 
+  select_best(metric = "accuracy")
+
+best_set_rand_fore = grid_results %>% 
+  extract_workflow_set_result("random_forest") %>% 
+  select_best(metric = "accuracy")
+
+best_set_decision = grid_results %>% 
+  extract_workflow_set_result("decision") %>% 
+  select_best(metric = "accuracy")
+
+best_set_bag = grid_results %>% 
+  extract_workflow_set_result("bag_tree") %>% 
+  select_best(metric = "accuracy")
+
+resultado_teste <- function(rc_rslts, fit_obj, par_set, split_obj) {
+  res <- rc_rslts %>%
+    extract_workflow(fit_obj) %>%
+    finalize_workflow(par_set) %>%
+    last_fit(split = split_obj,
+             metrics = metric_set(
+              accuracy,roc_auc,
+              f_meas,precision,
+              recall,spec,kap))
+  res
+}
+
+resultado_teste_reg_log <- resultado_teste(grid_results, "Reg_log", best_set_linear, split)
+resultado_teste_knn <- resultado_teste(grid_results, "KNN", best_set_knn, split)
+resultado_teste_lda <- resultado_teste(grid_results, "LDA", best_set_lda, split)
+resultado_teste_qda <- resultado_teste(grid_results, "QDA", best_set_qda, split)
+resultado_teste_naive <- resultado_teste(grid_results, "Naive_Bayes", best_set_nbayes, split)
+resultado_teste_decision <- resultado_teste(grid_results, "decision", best_set_decision, split)
+resultado_teste_bag <- resultado_teste(grid_results, "bag_tree", best_set_bag, split)
+resultado_teste_random_forest <- resultado_teste(grid_results, "random_forest", best_set_rand_fore, split)
+
+metrics_table <- rbind(collect_metrics(resultado_teste_reg_log)$.estimate, 
+                       collect_metrics(resultado_teste_knn)$.estimate, 
+                       collect_metrics(resultado_teste_lda)$.estimate, 
+                       collect_metrics(resultado_teste_qda)$.estimate, 
+                       collect_metrics(resultado_teste_naive)$.estimate, 
+                       collect_metrics(resultado_teste_decision)$.estimate, 
+                       collect_metrics(resultado_teste_bag)$.estimate,
+                       collect_metrics(resultado_teste_random_forest)$.estimate)
+
+metrics_table <- round(metrics_table, 4)
+
+row_names <- c("Regressão Logística", "KNN", "Discriminante Linear", "Discriminante Quadrático", "Naive Bayes", "Árvore de Decisão", "Bagged Tree", "Floresta Aleatória")
+
+metrics_table <- cbind(row_names, metrics_table)
+
+metrics_table <- metrics_table %>% 
+  as_tibble()
+
+colnames(metrics_table) <- c("Método", "Acurácia", "Curva Roc", "f_means", "Precisão", "Recall", "Especificidade", "Kappa")
+
+metrics_table <- metrics_table %>% 
+  mutate(Acurácia = as.numeric(Acurácia), 
+         `Curva Roc` = as.numeric(`Curva Roc`), 
+         f_means = as.numeric(f_means), 
+         Precisão = as.numeric(Precisão), 
+         Recall = as.numeric(Recall), 
+         Especificidade = as.numeric(Especificidade), 
+         Kappa = as.numeric(Kappa)) %>% 
+  arrange(desc(Acurácia), desc(`Curva Roc`), desc(f_means), desc(Kappa)) %>%
+  select(Método,Acurácia,`Curva Roc`,Especificidade)
+  
+metrics_table %>%  
+  gt::gt() %>% 
+  gt::tab_header(
+    title = gt::html("<b> Resultado dos modelos nos dados de teste</b>"), 
+    subtitle = glue::glue("De acordo com algumas métricas")) %>% 
+  gt::data_color(
+    columns = Acurácia, 
+    colors = scales::col_numeric(
+      palette = colorspace::sequential_hcl(n = 10, palette = "Green"), 
+      domain = c(min(metrics_table$Acurácia), max(metrics_table$Acurácia)),
+      reverse = TRUE
+    )
+  ) %>% 
+  gt::data_color(
+    columns = `Curva Roc`, 
+    colors = scales::col_numeric(
+      palette = colorspace::sequential_hcl(n = 10, palette = "Green"), 
+      domain = c(min(metrics_table$`Curva Roc`), max(metrics_table$`Curva Roc`)),
+      reverse = TRUE
+    )
+  ) %>% 
+    gt::data_color(
+    columns = Especificidade, 
+    colors = scales::col_numeric(
+      palette = colorspace::sequential_hcl(n = 8, palette = "Red"), 
+      domain = c(max(metrics_table$Especificidade),min(metrics_table$Especificidade)),
+      reverse = TRUE
+    )
+  ) %>% 
+  cols_align(align = "center", columns = everything()) %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ), 
+    locations = cells_body(columns = c(Acurácia, `Curva Roc`))
+  )
+
+```
+
+Desta tabela, vemos a real situação do ajuste. Apesar de bons valores de acurácia e roc auc, a realidade é que todos os modelos performaram mal quando analisada a métrica especificidade. Ou seja, alguns foram até eficientes em predizer verdadeiros zeros, mas todos foram ruins em predizer verdadeiros um (alguns piores que outros). Desta forma, todos os modelos apresentam uma alta taxa de erro tipo 1. Na realidade, estes dados eram bastante desbalanceados, com em torno de 30mil zeros e 8mil uns. Desta forma, é razoável dizer que nenhum modelo pode ser escolhido para esta análise.
+
+```{r, cache=TRUE}
+predictions <- resultado_teste_random_forest %>%
+  collect_predictions()
+
+confusion_matrix <- predictions %>%
+  conf_mat(truth = favoravel_reu, estimate = .pred_class)
+
+autoplot(confusion_matrix, type = "heatmap")
+```
+
+Visualizando a matriz de confusão do melhor modelo (floresta aleatória), notamos o observado acima. A classificação de verdadeiros 1 (decisão favorável ao réu) é extremamente ineficaz.
+
+Desta forma, podemos concluir que este conjunto de dados é de separação difícil, sendo necessário um estudo muito mais aprofundado das covariáveis — é interessante notar que estes dados são públicos, e foram obtidos de [Corte aberta](https://transparencia.stf.jus.br/extensions/corte_aberta/corte_aberta.html). No entanto, nem todas as covariáveis do processo estão disponíveis de forma pública e direta, como por exemplo o número de embargos que o processo sofreu, algumas tipificações extras, o mérito do processo, etc. Portanto, para tentar realizar uma análise classificatória, é necessário um conhecimento e um conjunto de dados muito mais holístico a fim de obter um ajuste mais preciso.
+
+# Referências
+
+Notas de aula — Tópicos 2.
+
+Junior, Paulo Manoel da Silva. Aplicação de Aprendizagem Supervisionada - Método de Classificação. 2024. Disponível em: <https://rpubs.com/paulomanoel57/MLsvm>
+
+Pinheiro, João Manoel Herrera. Um estudo sobre Algoritmos de Boosting e a Otimização de Hiperparâmetros Utilizando Optuna. São Carlos, SP. 2023. Disponível em: <https://bdta.abcd.usp.br/directbitstream/6962846b-66bd-4bd6-9f74-2b18bff03234/Pinheiro_JoãoManoelHerrera_tcc.pdf>

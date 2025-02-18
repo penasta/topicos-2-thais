@@ -1,0 +1,38 @@
+Prova 13/01
+
+Trab.1: Datas
+
+08/01 - Grupo 6
+15/01 - Grupo 3
+20/01 - Grupo 1
+22/01 - Grupo 2
+27/01 - Grupo 4
+29/01 - Grupo 5
+
+Duplas:
+
+Grupo 6: t-SNE
+Júlia
+Ana Luiza
+
+Grupo 1: SVM
+Khezia
+Natália
+
+Grupo 2: DBScan
+Davi
+Daniel
+
+Grupo 3: XGBoost/Catboost
+Bruno 
+João Victor
+
+Grupo 4: Nayve Bayes/Bayesian Networks
+Breno 
+Nathalia
+
+Grupo 5: GMM
+Gilberg
+Matheus
+
+

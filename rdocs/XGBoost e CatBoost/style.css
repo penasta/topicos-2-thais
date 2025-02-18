@@ -1,0 +1,9 @@
+.styled-output .cell-output {
+  background-color: #c8cac8;
+}
+
+.styled-output .cell-output pre {
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}

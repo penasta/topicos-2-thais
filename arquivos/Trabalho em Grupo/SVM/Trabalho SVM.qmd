@@ -1,0 +1,338 @@
+---
+title: "SVM - Apresentação"
+author:
+  - "Khezia Ribeiro"
+  - "Natália Vieira"
+date: "`r Sys.Date()`"
+format: 
+  html:
+    code-fold: false
+    code-tool: true
+    toc: true
+editor: visual
+---
+
+# Pacotes R e suas funções SVM
+
+Para essa apresentação foram utilizados os seguintes pacotes:
+
+-   **dplyr e stringr:** manipulação dos dados
+
+-   **ggplot2:** Visualização gráfica
+
+-   **e1071:** algoritmo SVM
+
+-   **tidymodels:** algoritmo SVM
+
+-   **LiblineaR:** engine "LiblineaR"
+
+-   **kernlab:** engine no tidymodels "kernlab"
+
+```{r, error=F, warning=F}
+pacman::p_load(dplyr, stringr, ggplot2, e1071, tidymodels, kernlab)
+```
+
+## Pacote e1071
+
+A função para o Support Vector Machine é a `svm()` . Abaixo se encontram os principais argumentos usado nela:
+
+-   scale: trata do escalonamento dos dados, seu default é TRUE.
+
+-   type: como será utilizado, isto é, para classificação ou regressão. Para classificação, define-se "C-classification", e para regressão é usado "eps-regression".
+
+-   kernel: o kernel que será utilizado para ajuste do modelo. Dependendo do kernel escolhido é necessário alterar alguns parâmetros na função `svm()`.
+
+    -   linear
+
+    -   radial (RFB Gaussiano)
+
+    -   polinominal
+
+-   cost: hiperparâmetro C
+
+-   epsilon: hiperparâmetro $\epsilon$
+
+-   gamma: utilizado em todos os kernels, menos o linear (default = $\frac{1}{dim(dados)}$)
+
+-   degree: grau do polimômio (default = 3)
+
+## Tidymodels
+
+Existem algumas funções no tidymodels para o algoritmo de SVM. Nessa apresentação, utilizaremos duas: `svm_linear()` e `svm_poly()` .
+
+-   **svm_linear()**
+
+    -   mode: define se será um SVM para classificação ("classification") ou regressão ("regression")
+
+    -   engine: pacote ou sistema que será utilizado para ajuste do modelo. No caso dessa função, ele aceita `LiblineaR` ou `kernlab` .
+
+        -   Ambas precisam de escalonamento dos dados previamente e variáveis categóricas ou como fatores devem ser transformadas para numéricas. No caso dessa última característica, ao utilizar o `fit()` o parnsnip já realiza a transformação.
+
+        -   O `kernlab` não estima as probabilidades das classes naturalmente. Para isso, os valores de decisão do modelo são convertidos para probabilidades usando a escala Pratt. Esse método ajusta um modelo adicional em cima do modelo SVM. Além disso, pelo método da escala Pratt, os números aleatórios que foram utilizados não são reproduzíveis ou controlados pelo fluxo de números aleatórios do R.
+
+    -   cost: hiperparâmetro C
+
+    -   margin: hiperparâmetro $\epsilon$
+
+-   **svm_poly()**
+
+    -   Funciona da mesma maneira que o `svm_linear()`, exceto que para engine ele aceita a `kernlab` .
+
+    -   Acréscimo do parâmetro `degree` , que indica o grau do polinômio.
+
+## Hiperparâmetros
+
+### C - cost
+
+Indica o tamanho da margem, tendo influência direto na quantidade de violações das margens. Um valor menor de **C** leva a uma via mais larga, mas com mais violações das margens.
+
+Se o modelo estiver sobreajustado, pode-se reduzir o valor de C para tentar regularizá-lo.
+
+### $\gamma$ - gamma
+
+Utilizado principalmente com um kernel radial, ele age como hiperparâmetro de regularização. No caso de sobreajuste, é necessário reduzí-lo e o contrário é feito para o cenário de subajuste.
+
+![Fonte: "Aurélien Géron. Mãos à Obra: Aprendizado de Máquina com Scikit-Learn & TensorFlow"](images/clipboard-688070399.png){fig-align="center"}
+
+### $\epsilon$ (epsilon ou margin)
+
+Indica a largura da via, principalmente para uma regressão SVM. Adicionar mais instâncias de treinamento dentro da margem não afeta as previsões do modelo. Assim, esse hiperparâmetro também é chamado de SVM insensitive loss function.
+
+# Apresentação - Support Vector Machines (SVM)
+
+### Função para construção dos gráficos
+
+```{r, error=F, warning=F}
+make.grid = function(x, n = 100) {
+  x1 = seq(from = min(x[,1]), to = max(x[,1]), length = n)
+  x2 = seq(from = min(x[,2]), to = max(x[,2]), length = n)
+  expand.grid(X1 = x1, X2 = x2)
+}
+```
+
+## Dados
+
+Os dados utilizados foram do Kaggle com o nome [Obesity Prediction Dataset](https://www.kaggle.com/datasets/ruchikakumbhar/obesity-prediction). Para essa apresentação só serão utilizadas 5 variáveis do banco de dados original, sendo elas:
+
+-   Sexo (feminino ou masculino)
+
+-   Idade
+
+-   Peso (kg)
+
+-   Altura (m)
+
+-   Obesidade (Obeso ou Não obeso)
+
+Também, foi criada a variável IMC, calculada a partir das variáveis Peso e Altura pela fórmula:
+
+$$
+IMC = Peso(kg)/Altura(m)^2
+$$
+
+```{r, error=F, warning=F}
+obesidade <- read.csv("Obesity prediction.csv") %>% 
+  rename(Sexo = Gender, Idade = Age, Altura = Height, Peso = Weight, Obesidade = Obesity) %>% 
+  mutate(IMC = Peso/(Altura^2),
+         Sexo = factor(Sexo, levels = c("Female", "Male"), labels = c(1,2)),
+         Obesidade = factor(ifelse(str_detect(Obesidade, "^Obesity"), 
+                            "Obeso", "Não obeso"),
+                            levels = c("Obeso", "Não obeso"))) %>% 
+  select(Sexo, Idade, Altura, Peso, IMC, Obesidade)
+```
+
+| Medidas       | Idade | Peso   | Altura | IMC   |
+|---------------|-------|--------|--------|-------|
+| Média         | 24,31 | 86,59  | 1,70   | 29,7  |
+| Desvio Padrão | 6,35  | 26,19  | 0,09   | 8,01  |
+| Mínimo        | 14    | 39     | 1,45   | 13    |
+| 1º Quartil    | 19,95 | 65,47  | 1,63   | 24,33 |
+| Mediana       | 22,78 | 83     | 1,7    | 28,72 |
+| 3º Quartil    | 26    | 107,43 | 1,77   | 36,02 |
+| Máximo        | 61    | 173    | 1,98   | 50,81 |
+
+## 1º exemplo: Obesidade \~ Idade + IMC
+
+### Divisão dos dados em conjunto de treino e de teste
+
+```{r, error=F, warning=F}
+obs_class1 <- obesidade %>% 
+  select(Idade, IMC, Obesidade)
+
+set.seed(25)
+obesidade_split_1 <- initial_split(obs_class1, prop = 0.7) 
+treino.1 <- training(obesidade_split_1)
+teste.1 <- testing(obesidade_split_1)
+```
+
+O banco foi dividido em 70% para o conjunto de treino e 30% para o conjunto de teste, totalizando 1477 e 634 observações para cada, respectivamente.
+
+### Pré-visualização dos dados de treino
+
+```{r, error=F, warning=F}
+ggplot() +
+  geom_point(data = treino.1, 
+             aes(x = Idade,
+                 y = IMC,
+                 colour = Obesidade),
+             size = 2) +
+  ylab("IMC") + 
+  xlab("Idade") +
+  labs(title = "Gráfico de dispersão do conjunto de treino")+
+  theme_minimal()
+```
+
+### Ajuste do SVM
+
+```{r, error=F, warning=F}
+#SVM linear
+svm1 <-  svm(formula = Obesidade ~ .,
+             data = treino.1,
+             type = 'C-classification', # classificação
+             kernel = 'linear',
+             cost = 1)
+pred1 <- predict(svm1, teste.1, type = "decision")
+
+table(teste.1$Obesidade, pred1)
+```
+
+```{r}
+x.ex1 <- teste.1[,-3] #selecionando as variáveis idade e imc
+
+# criando grid
+xgrid.ex1 <-  make.grid(as.matrix(x.ex1), n = 100)
+
+# colocando o nome das variáveis em suas respectivas colunas
+colnames(xgrid.ex1) <- c("Idade", "IMC")
+
+# selecionando os valores reais da classificação
+y.ex1 <- as.numeric(as.factor(teste.1$Obesidade))
+
+# realizando a previsão 
+ygrid.ex1 = predict(svm1, xgrid.ex1)
+
+# visualização dos resultados
+plot(xgrid.ex1, col = c("pink","green")[as.numeric(ygrid.ex1)], pch = 20, cex = .2)
+points(x.ex1, col = y.ex1 + 1, pch = 20)
+```
+
+### Ajuste pelo tidymodels
+
+```{r, error=F, warning=F}
+# tidymodels
+svm_linear_kernlab <-
+  svm_poly(degree= 1) %>%
+  set_args(cost = 1) %>% 
+  set_engine('kernlab') %>%
+  set_mode('classification')
+
+# ajuste do modelo
+svm_tidy_1 <- svm_linear_kernlab %>% 
+  fit(Obesidade ~ Idade + IMC, data = treino.1)
+
+# predição dos valores
+pred1_tidy <- predict(svm_tidy_1, teste.1)
+
+table(teste.1$Obesidade, pred1_tidy$.pred_class)
+```
+
+## 2º exemplo: Obesidade no sexo feminino pelo IMC
+
+### Divisão dos dados
+
+```{r, error=F, warning=F}
+# Classificador 2: Obesidade - Sexo(feminino) + IMC
+obs_class2 <- obesidade %>% 
+  filter(Sexo == 1) %>% 
+  select(Sexo, IMC, Obesidade)
+
+set.seed(25)
+obesidade_split_2 <- initial_split(obs_class2, prop = 0.7)
+treino.2 <- training(obesidade_split_2) 
+teste.2 <- testing(obesidade_split_2) 
+```
+
+O banco foi dividido em 70% para o conjunto de treino e 30% para o conjunto de teste, totalizando 730 e 313 observações para cada, respectivamente.
+
+### Pré-visualização
+
+```{r, error=F, warning=F}
+# plotando os dados da base
+ggplot() +
+  geom_point(data = obs_class2, 
+             aes(x = IMC,
+                 y = Sexo,
+                 colour = Obesidade),
+             size = 2) +
+  xlab("IMC") + 
+  ylab("Sexo") +
+  theme_minimal()
+```
+
+### Ajuste do modelo nos dados de treinamento
+
+```{r, error=F, warning=F}
+#SVM polinomial de grau 2
+svm2 <- svm(formula = Obesidade ~ .,
+            data = treino.2,
+            type = 'C-classification', #classificação
+            kernel = 'polynomial',
+            degree = 2,
+            cost = 1)
+
+pred2 <- predict(svm2, teste.2, type = "decision")
+
+table(teste.2$Obesidade, pred2)
+```
+
+```{r, error=F, warning=F}
+ggplot() +
+  geom_point(data = obs_class2, 
+             aes(x = IMC,
+                 y = IMC^2,
+                 colour = Obesidade),
+             size = 2) +
+  xlab("IMC") + 
+  ylab("IMC²") +
+  theme_minimal()
+```
+
+### Ajuste pelo tidymodels
+
+```{r, error=F, warning=F}
+# tidymodels
+svm_linear_kernlab <-
+  svm_poly(degree= 2) %>%
+  set_args(cost = 1) %>% 
+  set_engine('kernlab') %>%
+  set_mode('classification')
+
+svm_tidy_2 <- svm_linear_kernlab %>% 
+  fit(Obesidade ~ Sexo + IMC, data = treino.2)
+
+pred2_tidy <- predict(svm_tidy_2, teste.2)
+
+table(teste.2$Obesidade, pred2_tidy$.pred_class)
+```
+
+## Referências
+
+[Pacote e1071 - svm()](https://www.rdocumentation.org/packages/e1071/versions/1.7-16/topics/svm)
+
+[Support Vector Machines - Rpubs](https://rpubs.com/Ian_M/666939)
+
+[SVM Linear - Parnsnip (Tidymodels)](https://parsnip.tidymodels.org/reference/svm_linear.html)
+
+[SVM Linear via LiblineaR - Parnsinp (tidymodels)](https://parsnip.tidymodels.org/reference/details_svm_linear_LiblineaR.html)
+
+[Documentação LiblineaR](https://rdrr.io/cran/LiblineaR/)
+
+[SVM Linear via kernlab - Parnsnip (Tidymodels)](https://parsnip.tidymodels.org/reference/details_svm_linear_kernlab.html)
+
+[SVM Polinomial - Parnsnip (Tidymodels)](https://parsnip.tidymodels.org/reference/svm_poly.html)
+
+[Support Vector Machines R](https://www.datacamp.com/tutorial/support-vector-machines-r)
+
+[ISRL tidymodels lab - Support Vector Machines](https://emilhvitfeldt.github.io/ISLR-tidymodels-labs/09-support-vector-machines.html)
+
+Livro texto. Aurélien Géron. Mãos à Obra: Aprendizado de Máquina com Scikit-Learn & TensorFlow.

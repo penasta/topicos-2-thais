@@ -1,0 +1,154 @@
+# Carregar pacotes necessários
+library(Rtsne) # Para o t-SNE
+library(dplyr)
+library(tidyverse)
+library(readr)
+library(plotly)
+library(caret)
+library(rattle) #origem dos dados
+
+# OBS - o TSNE é um método NÃO-SUPERVISIONADO, então não leva em consideração os rótulos
+# dos dados na hora de separar, eles foram adicionados nas visualizações desse código com o intuito de mostrar
+# que o algoritmo funcionou e conseguiu separar os clusters, mas não quer dizer que ele fez uma classificação
+# usando esses rótulos. 
+
+data(wine)
+
+set.seed(123)
+##### dados de vinho
+
+tsne_result_no_norm <- Rtsne(wine[, -1], dims = 2, verbose=TRUE) #outras caracs como o default
+#tsne_result_no_norm
+
+# Obter os resultados de t-SNE
+tsne_data_no_norm <- as.data.frame(tsne_result_no_norm$Y)
+tsne_data_no_norm$Class <- wine$Type
+
+# Visualização sem normalização
+ggplot(tsne_data_no_norm, aes(x = V1, y = V2, color = as.factor(Class))) +
+  geom_point() +
+  labs(title = "t-SNE: Sem Normalização - 2D", x = "Dimensão 1", y = "Dimensão 2") +
+  theme_minimal() +
+  scale_color_manual(values = c("#4363D8", "#F58231", "#911EB4"))
+
+###### Dados de vinho normalizados
+set.seed(123)
+tsne_result_norm <- Rtsne(wine[, -1], dims = 2, perplexity = 30, pca_scale = TRUE)
+
+# Obter os resultados de t-SNE
+tsne_data_norm <- as.data.frame(tsne_result_norm$Y)
+tsne_data_norm$Class <- wine$Type
+
+# Visualização com normalização
+ggplot(tsne_data_norm, aes(x = V1, y = V2, color = as.factor(Class))) +
+  geom_point() +
+  labs(title = "t-SNE: Com Normalização", x = "Dimensão 1", y = "Dimensão 2") +
+  theme_minimal() +
+  scale_color_manual(values = c("#4363D8", "#F58231", "#911EB4"))
+
+# Brincando com a perplexity
+run_tsne <- function(perplexity) {
+  set.seed(123)
+  tsne_result <- Rtsne(wine[,-1], dims = 2, perplexity = perplexity, pca_scale = TRUE)
+  tsne_data <- as.data.frame(tsne_result$Y)
+  tsne_data$Class <- wine$Type
+  return(tsne_data)
+}
+
+perplexities <- c(5, 10, 20, 50)
+
+# Loop para gerar os gráficos
+plots <- list()
+for (p in perplexities) {
+  tsne_data <- run_tsne(p)
+  plot <- ggplot(tsne_data, aes(x = V1, y = V2, color = as.factor(Class))) +
+    geom_point() +
+    labs(title = paste("t-SNE: Perplexity =", p), x = "Dimensão 1", y = "Dimensão 2") +
+    theme_minimal() +
+    scale_color_manual(values = c("#4363D8", "#F58231", "#911EB4"))
+  plots[[paste(p, sep = "_")]] <- plot
+}
+
+gridExtra::grid.arrange(grobs = plots, ncol = 2)
+
+#### Dados vinho 3D
+set.seed(123)
+tsne_results_3d <- Rtsne(wine[, -1], dims = 3, perplexity = 30, verbose = TRUE,pca_scale = TRUE)
+
+tsne_data_3d <- as.data.frame(tsne_results_3d$Y)
+tsne_data_3d$Class <- wine$Type
+
+colors <- c("#E6194B", "#3CB44B", "#FFE119", "#4363D8", "#F58231", "#911EB4", "#46F0F0", "#F032E6", "#BCF60C", "#FABEBE")
+hover_text <- paste(
+  "Class:", tsne_data_3d$Class, "",
+  "Dimensão 1:", round(tsne_data_3d$V1, 3),
+  "Dimensão 2:", round(tsne_data_3d$V2, 3),
+  "Dimensão 3:", round(tsne_data_3d$V3, 3)
+)
+
+plot_ly(
+  data = tsne_data_3d,
+  x = ~V1,
+  y = ~V2,
+  z = ~V3,
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 6),
+  text = hover_text,
+  hoverinfo = "text",
+  color = ~Class,
+  colors = colors
+) %>%
+  layout(
+    title = "t-SNE: Vizualização 3D",
+    scene = list(
+      xaxis = list(title = "Dimension 1"),
+      yaxis = list(title = "Dimension 2"),
+      zaxis = list(title = "Dimension 3")
+    )
+  )
+
+###### Dados de câncer
+
+data1 <- read_csv("C:/Users/Ana Luiza/Downloads/gene+expression+cancer+rna+seq/TCGA-PANCAN-HiSeq-801x20531/TCGA-PANCAN-HiSeq-801x20531/data.csv")
+labels <- read_csv("C:/Users/Ana Luiza/Downloads/gene+expression+cancer+rna+seq/TCGA-PANCAN-HiSeq-801x20531/TCGA-PANCAN-HiSeq-801x20531/labels.csv")
+
+labels$...1
+
+data<- merge(labels, data1, by = "...1", all.y = TRUE)
+
+data$...1 <- NULL  
+
+zero_variance_cols <- nearZeroVar(data)
+if (length(zero_variance_cols) > 0) {
+  # Remover as colunas com variação zero
+  data <- data[, -zero_variance_cols]
+}
+
+
+# Separar os rótulos e remover coluna redundante
+labels <- as.factor(data$Class)
+
+set.seed(123)
+tsne <- Rtsne(as.matrix(data[,-1]), dims = 2, perplexity = 30, verbose = TRUE)
+
+
+gene_of_interest <- "gene_37"  # Substitua pelo nome do gene
+
+# Adicionar os valores de expressão do gene ao dataset do t-SNE
+tsne_data$gene_expression <- data[[gene_of_interest]]
+
+# Visualizar os clusters com os valores de expressão do gene
+ggplot(tsne_data, aes(x = TSNE1, y = TSNE2, color = gene_expression)) +
+  geom_point(size = 1.5) +
+  scale_color_gradient(low = "blue", high = "red", name = "Expressão do Gene") +
+  labs(
+    title = paste("Expressão do Gene", gene_of_interest, "nos Clusters"),
+    x = "Dimensão t-SNE 1",
+    y = "Dimensão t-SNE 2"
+  ) +
+  theme_minimal()
+
+## Tidymodels (?) -> não existe função nativa nesse pacote para adicionar o TSNE como um passo 
+## de uma recipe (pode-se fazer a análise manualmente como nos códigos aqui, ou adicionar manualmente 
+## usando como um step em um recipe do tidymodels)
